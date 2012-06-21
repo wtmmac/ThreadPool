@@ -1,77 +1,75 @@
 import threading, Queue, time, sys
 
 
-
-class ThreadPool(Threading.Thread):
-    def __init__(self, numThreads=MAXTHREADS):
-        self.inQueue  = Queue.Queue()
-        self.outQueue = Queue.Queue()
-        self.errQueue = Queue.Queue()
-        self.pool = []
-        for 
-        
-
-def report_error():
-    ''' we "report" errors by adding error information to errQueue '''
-    errQueue.put(sys.exc_info()[:2])
-
-def get_all_from_queue(Q):
-    ''' generator to yield one after the others all items currently
-        in the Queue Q, without any waiting
-    '''
-    try:
+class Worker(Threading.Thread):
+    def __init__(self, inQueue, outQueue, errQueue):
+        Threading.Thread._ _init_ _(self, **kwds)
+        self.setDaemon(True)
+        self.inQueue = inQueue
+        self.outQueue = outQueue
+        self.errQueue = errQueue
+        self.active = True
+        self.start() 
+    
+    def run(self):
         while True:
-            yield Q.get_nowait()
-    except Queue.Empty:
-        raise StopIteration
-    
-def do_work_from_queue():
-    ''' the get-some-work, do-some-work main loop of worker threads '''
-    while True:
-        command, item = inQueue.get()       # implicitly stops and waits
-        if command == 'stop':
-            break
-        try:
-            # simulated work functionality of a worker thread
-            if command == 'process':
-                result = 'new' + item
+            if !self.active:
+                break
+            try:
+                callable, args, kwds = self.inQueue.get()
+            except:
+                self.reportError() 
             else:
-                raise ValueError, 'Unknown command %r' % command
-        except:
-            # unconditional except is right, since we report _all_ errors
-            report_error()
-        else:
-            outQueue.put(result)
-            
-def make_and_start_thread_pool(number_of_threads_in_pool=5, daemons=True):
-    ''' make a pool of N worker threads, daemonize, and start all of them '''
-    for i in range(number_of_threads_in_pool):
-         new_thread = threading.Thread(target=do_work_from_queue)
-         new_thread.setDaemon(daemons)
-         Pool.append(new_thread)
-         new_thread.start()
-         
-def request_work(data, command='process'):
-    ''' work requests are posted as (command, data) pairs to inQueue '''
-    inQueue.put((command, data))
-    
-def get_result():
-    return outQueue.get()     # implicitly stops and waits
-
-def show_all_results():
-    for result in get_all_from_queue(outQueue):
-        print 'Result:', result
+                self.outQueue.put(callable(*args, **kwds))
+                
+    def dismiss(self):
+        self.active = False
         
-def show_all_errors():
-    for etyp, err in get_all_from_queue(errQueue):
-        print 'Error:', etyp, err
+    def reportErr(self):
+        ''' we "report" errors by adding error information to errQueue '''
+        self.errQueue.put(sys.exc_info()[:2])
 
-def stop_and_free_thread_pool():
-    # order is important: first, request all threads to stop...:
-    for i in range(len(Pool)):
-        request_work(None, 'stop')
-    # ...then, wait for each of them to terminate:
-    for existing_thread in Pool:
-        existing_thread.join()
-    # clean up the pool from now-unused thread objects
-    del Pool[:]
+        
+class ThreadPool():
+    def __init__(self, numThreads, poolSize=0):
+        self.inQueue  = Queue.Queue(poolSize)
+        self.outQueue = Queue.Queue(poolSize)
+        self.errQueue = Queue.Queue(poolSize)
+        self.pool = {}
+        for i in range(numThreads):
+            newThread = Worder(self.inQueue, self.outQueue, self.errQueue)
+            self.pool[i] = newThread
+            
+    def addTask(self, callable, *args, **kwds):
+        self.inQueue.put((callable, args, kwds))
+
+    def getAllResults(self, queue):
+        ''' generator to yield one after the others all items currently
+            in the queue, without any waiting
+        '''
+        try:
+            while True:
+                yield queue.get_nowait()
+        except Queue.Empty:
+            raise StopIteration
+    
+    def getTask(self):
+        return self.outQueue.get()     # implicitly stops and waits
+
+    def showAllResults(self):
+        for result in getAllResults(self.outQueue):
+            print 'Result:', result
+        
+    def showAllErrors(self):
+        for etyp, err in get_all_from_queue(self.errQueue):
+            print 'Error:', etyp, err
+
+    def dismissWorkers(self):
+        # order is important: first, request all threads to stop...:
+        for i in pool:
+            self.pool[i].dismiss
+        # ...then, wait for each of them to terminate:
+        for i in Pool:
+            self.pool[i].join()
+        # clean up the pool from now-unused thread objects
+        del Pool
