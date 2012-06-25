@@ -13,20 +13,21 @@ class Worker(threading.Thread):
     
     def run(self):
         while True:
-            if not self.active:
-                print "stop"
+            command, callable, args, kwds = self.inQueue.get()
+            if command == 'stop':
                 break
             try:
-                callable, args, kwds = self.inQueue.get()
+                if command != 'process':
+                    raise ValueError, 'Unknown command %r' % command
             except:
                 self.reportError() 
             else:
                 self.outQueue.put(callable(*args, **kwds))
-                print self.outQueue.qsize()
                 
     def dismiss(self):
         print "dismiss"
-        self.active = False
+        command = 'stop'
+        self.inQueue.put((command, None, None, None))
         
     def reportErr(self):
         ''' we "report" errors by adding error information to errQueue '''
@@ -44,7 +45,8 @@ class ThreadPool():
             self.pool[i] = newThread
             
     def addTask(self, callable, *args, **kwds):
-        self.inQueue.put((callable, args, kwds))
+        command = 'process' 
+        self.inQueue.put((command, callable, args, kwds))
 
     def _getAllResults(self, queue):
         ''' generator to yield one after the others all items currently
@@ -76,7 +78,8 @@ class ThreadPool():
         for i in self.pool:
             self.pool[i].join()
         # clean up the pool from now-unused thread objects
-        del pool
+        print self.pool
+        del self.pool
 
 
 cnt = 0
@@ -93,6 +96,5 @@ if __name__ == "__main__":
    pool.showAllResults()
    pool.dismissWorkers()
    print "done"
-
 
 
