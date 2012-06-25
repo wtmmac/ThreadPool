@@ -4,7 +4,7 @@ import threading, Queue, time, sys
 class Worker(threading.Thread):
     def __init__(self, inQueue, outQueue, errQueue):
         threading.Thread.__init__(self)
-        self.setDaemon(True)
+        #self.setDaemon(True)
         self.inQueue = inQueue
         self.outQueue = outQueue
         self.errQueue = errQueue
@@ -14,6 +14,7 @@ class Worker(threading.Thread):
     def run(self):
         while True:
             if not self.active:
+                print "stop"
                 break
             try:
                 callable, args, kwds = self.inQueue.get()
@@ -21,8 +22,10 @@ class Worker(threading.Thread):
                 self.reportError() 
             else:
                 self.outQueue.put(callable(*args, **kwds))
+                print self.outQueue.qsize()
                 
     def dismiss(self):
+        print "dismiss"
         self.active = False
         
     def reportErr(self):
@@ -51,6 +54,7 @@ class ThreadPool():
             while True:
                 yield queue.get_nowait()
         except Queue.Empty:
+            print "empty"
             raise StopIteration
     
     def getTask(self):
@@ -80,14 +84,15 @@ cnt = 0
 def callback():
    global cnt
    cnt += 1
-   print "hello"
-   return True 
+   return cnt 
 
 if __name__ == "__main__":
    pool = ThreadPool(5)
-   pool.addTask(callback())
+   pool.addTask(callback)
+   time.sleep(1)
    pool.showAllResults()
    pool.dismissWorkers()
+   print "done"
 
 
 
