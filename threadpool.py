@@ -4,11 +4,10 @@ import threading, Queue, time, sys
 class Worker(threading.Thread):
     def __init__(self, inQueue, outQueue, errQueue):
         threading.Thread.__init__(self)
-        #self.setDaemon(True)
+        self.setDaemon(True)
         self.inQueue = inQueue
         self.outQueue = outQueue
         self.errQueue = errQueue
-        self.active = True
         self.start() 
     
     def run(self):
@@ -91,7 +90,8 @@ def callback():
 
 if __name__ == "__main__":
    pool = ThreadPool(5)
-   pool.addTask(callback)
+   for i in range(10):
+       pool.addTask(callback)
    time.sleep(1)
    pool.showAllResults()
    pool.dismissWorkers()
