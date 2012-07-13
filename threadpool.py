@@ -1,3 +1,4 @@
+import unittest
 import threading, Queue, time, sys
 
 
@@ -32,9 +33,12 @@ class Worker(threading.Thread):
         ''' we "report" errors by adding error information to errQueue '''
         self.errQueue.put(sys.exc_info()[:2])
 
-        
+maxThreads = 32 
+
 class ThreadPool():
     def __init__(self, numThreads, poolSize=0):
+        if numThreads > maxThreads:
+            numThreads = maxThreads
         self.inQueue  = Queue.Queue(poolSize)
         self.outQueue = Queue.Queue(poolSize)
         self.errQueue = Queue.Queue(poolSize)
@@ -59,7 +63,7 @@ class ThreadPool():
             raise StopIteration
     
     def getTask(self):
-        return self.outQueue.get()     # implicitly stops and waits
+        return self.outQueue.get()    
 
     def showAllResults(self):
         for result in self._getAllResults(self.outQueue):
@@ -81,20 +85,18 @@ class ThreadPool():
         del self.pool
 
 
-cnt = 0
 
-def callback():
-   global cnt
-   cnt += 1
-   return cnt 
+def doWork(*args, **kwds):
+    return kwds 
 
 if __name__ == "__main__":
-   pool = ThreadPool(5)
-   for i in range(10):
-       pool.addTask(callback)
-   time.sleep(1)
-   pool.showAllResults()
-   pool.dismissWorkers()
-   print "done"
+    pool = ThreadPool(5)
+    for i in range(10):
+        pool.addTask(doWork, a=i, b=i*2)
+    # wait untill all tasks have been processed
+    time.sleep(1)
+    pool.showAllResults()
+    pool.dismissWorkers()
+    print "done"
 
 
