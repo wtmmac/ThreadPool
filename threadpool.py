@@ -1,4 +1,4 @@
-import threading, Queue, time, sys
+import threading, Queue
 
 
 class Worker(threading.Thread):
@@ -35,6 +35,7 @@ class Worker(threading.Thread):
 class ThreadPool():
     maxThreads = 32 
     def __init__(self, numThreads, poolSize=0):
+        # poolSize = 0 indicates buffer is unlimited.
         if numThreads > ThreadPool.maxThreads:
             numThreads = ThreadPool.maxThreads
         self.inQueue  = Queue.Queue(poolSize)
