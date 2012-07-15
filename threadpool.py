@@ -1,4 +1,3 @@
-import unittest
 import threading, Queue, time, sys
 
 
@@ -25,7 +24,6 @@ class Worker(threading.Thread):
                 self.outQueue.put(callable(*args, **kwds))
                 
     def dismiss(self):
-        print "dismiss"
         command = 'stop'
         self.inQueue.put((command, None, None, None))
         
@@ -33,12 +31,12 @@ class Worker(threading.Thread):
         ''' we "report" errors by adding error information to errQueue '''
         self.errQueue.put(sys.exc_info()[:2])
 
-maxThreads = 32 
 
 class ThreadPool():
+    maxThreads = 32 
     def __init__(self, numThreads, poolSize=0):
-        if numThreads > maxThreads:
-            numThreads = maxThreads
+        if numThreads > ThreadPool.maxThreads:
+            numThreads = ThreadPool.maxThreads
         self.inQueue  = Queue.Queue(poolSize)
         self.outQueue = Queue.Queue(poolSize)
         self.errQueue = Queue.Queue(poolSize)
@@ -59,7 +57,6 @@ class ThreadPool():
             while True:
                 yield queue.get_nowait()
         except Queue.Empty:
-            print "empty"
             raise StopIteration
     
     def getTask(self):
@@ -81,22 +78,5 @@ class ThreadPool():
         for i in self.pool:
             self.pool[i].join()
         # clean up the pool from now-unused thread objects
-        print self.pool
         del self.pool
-
-
-
-def doWork(*args, **kwds):
-    return kwds 
-
-if __name__ == "__main__":
-    pool = ThreadPool(5)
-    for i in range(10):
-        pool.addTask(doWork, a=i, b=i*2)
-    # wait untill all tasks have been processed
-    time.sleep(1)
-    pool.showAllResults()
-    pool.dismissWorkers()
-    print "done"
-
 
