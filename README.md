@@ -1,18 +1,19 @@
-##Thread pool
+Thread pool
+============
 This is simple thread pool for python.
 
-##Usage:
+Usage:
+============
 It's so easy to use.
 
-- Firstly, you should define a callback to deal with your task.
+Firstly, you should define a callback to deal with your task.
 
 
     def do_work(*args, **kwds):
         # do something
         
-- Then, you can create a thread pool to schedule your tasks.
-
-
+Then, you can create a thread pool to schedule your tasks.
+    
     # Create thread pool with nums threads
     pool = threadpool.ThreadPool(nums)
     # Add a task into pool
