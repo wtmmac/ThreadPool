@@ -7,7 +7,7 @@ logging.basicConfig(
         format='[%(levelname)s] (%(threadName)-10s) %(message)s',
         )
 
-def doWork(*args, **kwds):
+def do_work(*args, **kwds):
     logging.debug('starting')
     logging.debug('args is ' + str(args) + ' kwds is ' + str(kwds))
     logging.debug('exiting')
@@ -17,6 +17,7 @@ if __name__ == "__main__":
     pool = threadpool.ThreadPool(3)
     logging.debug('Add 10 tasks to thread pool.')
     for i in range(20):
-        pool.add_task(doWork, i, a=i)
-    logging.debug('Destroy thread pool and join threads')
+        pool.add_task(do_work, i, a=i)
+    logging.debug('Join all threads and destroy thread pool.')
     pool.destroy()
+    logging.debug('Done.')
