@@ -1,58 +1,70 @@
-import threading, Queue
-
+import sys
+import threading
+import Queue
 
 class Worker(threading.Thread):
-    def __init__(self, inQueue, outQueue, errQueue):
+    """Routines for work thread."""
+    def __init__(self, in_queue, out_queue, err_queue):
+        """Initialize and launch a work thread,
+        in_queue which tasks in it waiting for processing,
+        out_queue which the return value of the task in it,
+        err_queue which stores error info when processing the task.
+        """
         threading.Thread.__init__(self)
         self.setDaemon(True)
-        self.inQueue = inQueue
-        self.outQueue = outQueue
-        self.errQueue = errQueue
+        self.in_queue = in_queue
+        self.out_queue = out_queue
+        self.err_queue = err_queue
         self.start() 
     
     def run(self):
         while True:
-            command, callable, args, kwds = self.inQueue.get()
+            # Processing tasks in the in_queue until command is stop.
+            command, callback, args, kwds = self.in_queue.get()
             if command == 'stop':
                 break
             try:
                 if command != 'process':
                     raise ValueError, 'Unknown command %r' % command
             except:
-                self.reportError() 
+                self.report_error() 
             else:
-                self.outQueue.put(callable(*args, **kwds))
+                self.out_queue.put(callback(*args, **kwds))
                 
     def dismiss(self):
         command = 'stop'
-        self.inQueue.put((command, None, None, None))
+        self.in_queue.put((command, None, None, None))
         
-    def reportErr(self):
-        ''' we "report" errors by adding error information to errQueue '''
-        self.errQueue.put(sys.exc_info()[:2])
-
+    def report_error(self):
+        '''We "report" errors by adding error information to err_queue.'''
+        self.err_queue.put(sys.exc_info()[:2])
 
 class ThreadPool():
-    maxThreads = 32 
-    def __init__(self, numThreads, poolSize=0):
-        # poolSize = 0 indicates buffer is unlimited.
-        if numThreads > ThreadPool.maxThreads:
-            numThreads = ThreadPool.maxThreads
-        self.inQueue  = Queue.Queue(poolSize)
-        self.outQueue = Queue.Queue(poolSize)
-        self.errQueue = Queue.Queue(poolSize)
-        self.pool = {}
-        for i in range(numThreads):
-            newThread = Worker(self.inQueue, self.outQueue, self.errQueue)
-            self.pool[i] = newThread
+    """Manager thread pool."""
+    max_threads = 32 
+    def __init__(self, num_threads, pool_size=0):
+        """Spawn num_threads threads in the thread pool,
+        and initialize three queues.
+        """
+        # pool_size = 0 indicates buffer is unlimited.
+        num_threads = ThreadPool.max_threads \
+            if num_threads > ThreadPool.max_threads \
+            else num_threads
+        self.in_queue = Queue.Queue(pool_size)
+        self.out_queue = Queue.Queue(pool_size)
+        self.err_queue = Queue.Queue(pool_size)
+        self.workers = {}
+        for i in range(num_threads):
+            worker = Worker(self.in_queue, self.out_queue, self.err_queue)
+            self.workers[i] = worker
             
-    def addTask(self, callable, *args, **kwds):
+    def add_task(self, callback, *args, **kwds):
         command = 'process' 
-        self.inQueue.put((command, callable, args, kwds))
+        self.in_queue.put((command, callback, args, kwds))
 
-    def _getAllResults(self, queue):
-        ''' generator to yield one after the others all items currently
-            in the queue, without any waiting
+    def _get_results(self, queue):
+        '''Generator to yield one after the others all items currently
+           in the queue, without any waiting
         '''
         try:
             while True:
@@ -60,24 +72,24 @@ class ThreadPool():
         except Queue.Empty:
             raise StopIteration
     
-    def getTask(self):
-        return self.outQueue.get()    
+    def get_task(self):
+        return self.out_queue.get()    
 
-    def showAllResults(self):
-        for result in self._getAllResults(self.outQueue):
+    def show_results(self):
+        for result in self._get_results(self.out_queue):
             print 'Result:', result
         
-    def showAllErrors(self):
-        for etyp, err in self._getAllResults(self.errQueue):
+    def show_errors(self):
+        for etyp, err in self._get_results(self.err_queue):
             print 'Error:', etyp, err
 
-    def dismissWorkers(self):
+    def destroy(self):
         # order is important: first, request all threads to stop...:
-        for i in self.pool:
-            self.pool[i].dismiss()
+        for i in self.workers:
+            self.workers[i].dismiss()
         # ...then, wait for each of them to terminate:
-        for i in self.pool:
-            self.pool[i].join()
-        # clean up the pool from now-unused thread objects
-        del self.pool
+        for i in self.workers:
+            self.workers[i].join()
+        # clean up the workers from now-unused thread objects
+        del self.workers
 
