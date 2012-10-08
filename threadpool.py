@@ -1,6 +1,6 @@
 # ThreadPool is a simple thread pool
 #
-# Copyright (C) Yummy Bian 2012 <yummy.bian#gmail.com>
+# Copyright (C) 2012 Yummy Bian <yummy.bian#gmail.com>
 #
 # under the terms of the GNU Lesser General Public License as published
 # by the Free Software Foundation, either version 3 of the License, or
