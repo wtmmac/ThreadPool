@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-#
 # ThreadPool is a simple thread pool
 #
 # Copyright (C) Yummy Bian 2012 <yummy.bian#gmail.com>
