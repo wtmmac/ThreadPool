@@ -1,6 +1,6 @@
 Thread pool
 ============
-This is a simple thread pool for python.
+This is a simple thread pool for python(using queue module).
 
 Usage:
 ============
