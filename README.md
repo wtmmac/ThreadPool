@@ -2,9 +2,13 @@ Thread pool
 ============
 This is a simple thread pool for python(using queue module).
 
+Install:
+============
+
+        python setup.py install
+
 Usage:
 ============
-It's so easy to use^_^
 
 - Firstly, you should define a callback to deal with your task.
 
@@ -14,8 +18,9 @@ It's so easy to use^_^
         
 - Then, you can create a thread pool to schedule your tasks.
     
+        from threadpool import ThreadPool
         # Create thread pool with nums threads
-        pool = threadpool.ThreadPool(nums)
+        pool = ThreadPool(nums)
         # Add a task into pool
         pool.add_task(do_work, args, kwds)
         # Join and destroy all threads
